@@ -327,7 +327,9 @@ pub trait BlockScanner<T: Scannable, S: Scratch> {
     ) -> Result<&Self, Error>;
 
     fn scan_mut<D>(
-        &mut self,
+        // The underlying hyperscan DB is immutable. This should be fine unless this binding
+        // introduces mutable state
+        &self,
         data: T,
         flags: ScanFlags,
         scratch: &S,
@@ -338,6 +340,7 @@ pub trait BlockScanner<T: Scannable, S: Scratch> {
             data,
             flags,
             scratch,
+            // FIXME: This seems TURBO SKETCHY and unecessary and should probably be reevaluated.
             callback.map(|f| unsafe { mem::transmute::<MatchEventCallbackMut<D>, MatchEventCallback<D>>(f) }),
             context.map(|v| &*v),
         )
